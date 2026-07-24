@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'database_helper.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PantallaSincronizacion extends StatefulWidget {
   const PantallaSincronizacion({super.key});
@@ -50,12 +51,15 @@ class _PantallaSincronizacionState extends State<PantallaSincronizacion> {
     }
 
     try {
-      // 1. Apuntamos a la IP especial del emulador hacia la ruta de Laravel
-      final url = Uri.parse('http://10.0.2.2:8000/api/sincronizar-inventario');
+      // 1. Obtenemos la URL base desde el archivo .env
+      final String baseUrl = dotenv.env['API_URL'] ?? 'http://10.0.2.2:8000/api';
 
-      // 2. Hacemos la petición POST enviando la lista de productos
+      // 2. Construimos la ruta completa y la convertimos a un objeto Uri
+      final url = Uri.parse('$baseUrl/sincronizar-inventario');
+
+      // 3. Hacemos la petición POST enviando la lista de productos
       final response = await http.post(
-        url,
+        url, // Ahora sí reconoce la variable 'url' en formato Uri
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'productos': _productos}),
       );

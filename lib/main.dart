@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
 import 'pantalla_sincronizacion.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Importa el paquete
 
-void main() {
+Future<void> main() async {
+  // Asegura que los bindings de Flutter estén listos antes de cargar el archivo
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Carga el archivo .env
+  await dotenv.load(fileName: ".env");
+
+  // Cambiamos MyApp por el nombre real de tu clase
   runApp(const InventarioApp());
 }
 
