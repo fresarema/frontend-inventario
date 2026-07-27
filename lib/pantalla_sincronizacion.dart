@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'database_helper.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'api_service.dart'; // Importamos el servicio centralizado
 
 class PantallaSincronizacion extends StatefulWidget {
   const PantallaSincronizacion({super.key});
@@ -15,6 +13,7 @@ class PantallaSincronizacion extends StatefulWidget {
 class _PantallaSincronizacionState extends State<PantallaSincronizacion> {
   List<Map<String, dynamic>> _productos = [];
   bool _hayConexion = false;
+  bool _estaCargando = false; // Estado para dar feedback visual al sincronizar
 
   @override
   void initState() {
@@ -50,39 +49,36 @@ class _PantallaSincronizacionState extends State<PantallaSincronizacion> {
       return;
     }
 
+    setState(() {
+      _estaCargando = true;
+    });
+
     try {
-      // 1. Obtenemos la URL base desde el archivo .env
-      final String baseUrl = dotenv.env['API_URL'] ?? 'http://10.0.2.2:8000/api';
+      // Usamos el ApiService que creamos
+      final apiService = ApiService();
+      await apiService.sincronizarInventario(_productos);
 
-      // 2. Construimos la ruta completa y la convertimos a un objeto Uri
-      final url = Uri.parse('$baseUrl/sincronizar-inventario');
+      // Si no lanza excepción, asumimos éxito -> limpiamos la base local
+      final dbHelper = DatabaseHelper();
+      await dbHelper.vaciarInventario();
+      await _cargarDatos();
 
-      // 3. Hacemos la petición POST enviando la lista de productos
-      final response = await http.post(
-        url, // Ahora sí reconoce la variable 'url' en formato Uri
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'productos': _productos}),
-      );
-
-      // 3. Si Laravel responde con un 200 OK, borramos la base local
-      if (response.statusCode == 200) {
-        final dbHelper = DatabaseHelper();
-        await dbHelper.vaciarInventario();
-        await _cargarDatos();
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Inventario sincronizado en el servidor'), backgroundColor: Colors.green),
-          );
-        }
-      } else {
-        throw Exception('Error en el servidor: ${response.statusCode}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Inventario sincronizado en el servidor'), backgroundColor: Colors.green),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al sincronizar: $e'), backgroundColor: Colors.red),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _estaCargando = false;
+        });
       }
     }
   }
@@ -104,7 +100,11 @@ class _PantallaSincronizacionState extends State<PantallaSincronizacion> {
         child: Column(
           children: [
             Expanded(
-              child: ListView.builder(
+              child: _productos.isEmpty
+                  ? const Center(
+                child: Text('No hay registros pendientes por sincronizar'),
+              )
+                  : ListView.builder(
                 itemCount: _productos.length,
                 itemBuilder: (context, index) {
                   final prod = _productos[index];
@@ -122,9 +122,15 @@ class _PantallaSincronizacionState extends State<PantallaSincronizacion> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: _productos.isEmpty ? null : _sincronizar,
-                  icon: const Icon(Icons.cloud_upload),
-                  label: Text('Subir ${_productos.length} registros'),
+                  onPressed: (_productos.isEmpty || _estaCargando) ? null : _sincronizar,
+                  icon: _estaCargando
+                      ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+                  )
+                      : const Icon(Icons.cloud_upload),
+                  label: Text(_estaCargando ? 'Sincronizando...' : 'Subir ${_productos.length} registros'),
                 ),
               ),
             ),
