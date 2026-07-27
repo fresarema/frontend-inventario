@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'database_helper.dart';
-import 'api_service.dart'; // Importamos el servicio centralizado
+import 'api_service.dart';
 
 class PantallaSincronizacion extends StatefulWidget {
   const PantallaSincronizacion({super.key});
@@ -13,7 +13,7 @@ class PantallaSincronizacion extends StatefulWidget {
 class _PantallaSincronizacionState extends State<PantallaSincronizacion> {
   List<Map<String, dynamic>> _productos = [];
   bool _hayConexion = false;
-  bool _estaCargando = false; // Estado para dar feedback visual al sincronizar
+  bool _estaCargando = false;
 
   @override
   void initState() {
@@ -54,11 +54,11 @@ class _PantallaSincronizacionState extends State<PantallaSincronizacion> {
     });
 
     try {
-      // Usamos el ApiService que creamos
+
       final apiService = ApiService();
       await apiService.sincronizarInventario(_productos);
 
-      // Si no lanza excepción, asumimos éxito -> limpiamos la base local
+
       final dbHelper = DatabaseHelper();
       await dbHelper.vaciarInventario();
       await _cargarDatos();

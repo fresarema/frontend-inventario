@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart'; // <-- Nuevo import
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'database_helper.dart';
 import 'pantalla_sincronizacion.dart';
@@ -69,15 +69,15 @@ class _PantallaCapturaState extends State<PantallaCaptura> {
     _cantidadController.clear();
   }
 
-  // --- NUEVA FUNCIÓN PARA ABRIR LA CÁMARA ---
+  // FUNCION PARA ABRIR CAMARA
   Future<void> _abrirEscaner() async {
-    // Esperamos el resultado que devuelva la pantalla del escáner
+    // Espera el resultado que devuelva la pantalla del escáner
     final String? codigoEscaneado = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const LectorCodigoPantalla()),
     );
 
-    // Si detectó un código (no canceló volviendo atrás), lo asignamos al input
+    // Si detectó un código (no canceló volviendo atrás), se asigna al input
     if (codigoEscaneado != null && mounted) {
       setState(() {
         _codigoController.text = codigoEscaneado;
@@ -116,7 +116,7 @@ class _PantallaCapturaState extends State<PantallaCaptura> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // --- FILA CON INPUT Y BOTÓN DE CÁMARA ---
+            // FILA CON INPUT Y BOTON DE CAMARA
             Row(
               children: [
                 Expanded(
@@ -176,7 +176,7 @@ class _PantallaCapturaState extends State<PantallaCaptura> {
   }
 }
 
-// --- NUEVA PANTALLA DE ESCÁNER A PANTALLA COMPLETA ---
+// PANTALLA DE SCANNER
 class LectorCodigoPantalla extends StatefulWidget {
   const LectorCodigoPantalla({super.key});
 
@@ -185,7 +185,7 @@ class LectorCodigoPantalla extends StatefulWidget {
 }
 
 class _LectorCodigoPantallaState extends State<LectorCodigoPantalla> {
-  // Bandera para evitar que lea el mismo código varias veces seguidas de golpe
+  // Evita que lea el mismo código varias veces seguidas de golpe
   bool _codigoDetectado = false;
 
   @override
@@ -198,7 +198,7 @@ class _LectorCodigoPantallaState extends State<LectorCodigoPantalla> {
       ),
       body: MobileScanner(
         onDetect: (capture) {
-          if (_codigoDetectado) return; // Si ya lo leyó, ignorar el resto
+          if (_codigoDetectado) return; // Si ya detectó un codigo, que ignore el resto
 
           final List<Barcode> barcodes = capture.barcodes;
 
@@ -206,7 +206,7 @@ class _LectorCodigoPantallaState extends State<LectorCodigoPantalla> {
             _codigoDetectado = true; // Bloqueamos nuevas lecturas
             final String codigoFinal = barcodes.first.rawValue!;
 
-            // Regresamos a la pantalla anterior pasándole el código detectado
+            // Regreso a pantalla anterior con el codigo detectado
             Navigator.pop(context, codigoFinal);
           }
         },
